@@ -6,8 +6,10 @@ def siteUrl = 'https://github.com/WaterlooBridge/Packer'
 def gitUrl = 'https://github.com/WaterlooBridge/Packer.git'
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion "27.0.1"
+    compileSdkVersion 28
+    defaultConfig {
+        minSdkVersion 14
+    }
 }
 
 dependencies {
@@ -48,5 +50,13 @@ bintray {
         vcsUrl = gitUrl
         licenses = ["Apache-2.0"]
         publish = true
+    }
+}
+
+task makeJar(dependsOn: build) {
+    doLast {
+        exec {
+            commandLine "jar", "cvfm", "./build/packer.jar", "./MANIFEST.MF", "-C", "./build/intermediates/javac/release/compileReleaseJavaWithJavac/classes", "."
+        }
     }
 }
