@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -19,7 +20,7 @@ public class PayloadReader {
     public static byte[] readBytes(final File apkFile, final int id)
             throws IOException {
         final ByteBuffer buf = readBlock(apkFile, id);
-        return buf == null ? null : V2Utils.getBytes(buf);
+        return buf == null ? null : getBytes(buf);
     }
 
     public static ByteBuffer readBlock(final File apkFile, final int id)
@@ -31,21 +32,44 @@ public class PayloadReader {
         return blocks.get(id);
     }
 
+    /**
+     * get data from byteBuffer
+     *
+     * @param byteBuffer buffer
+     * @return useful data
+     */
+    private static byte[] getBytes(final ByteBuffer byteBuffer) {
+        final byte[] array = byteBuffer.array();
+        final int arrayOffset = byteBuffer.arrayOffset();
+        return Arrays.copyOfRange(array, arrayOffset + byteBuffer.position(),
+                arrayOffset + byteBuffer.limit());
+    }
+
     private static Map<Integer, ByteBuffer> readAllBlocks(final File apkFile)
             throws IOException {
-        Map<Integer, ByteBuffer> blocks = null;
-
-        RandomAccessFile raf = null;
-        FileChannel fc = null;
+        Map<Integer, ByteBuffer> idValues = null;
+        RandomAccessFile randomAccessFile = null;
+        FileChannel fileChannel = null;
         try {
-            raf = new RandomAccessFile(apkFile, "r");
-            fc = raf.getChannel();
-            final ByteBuffer apkSigningBlock = ApkUtil.findApkSigningBlock(fc).getFirst();
-            blocks = ApkUtil.findIdValues(apkSigningBlock);
+            randomAccessFile = new RandomAccessFile(apkFile, "r");
+            fileChannel = randomAccessFile.getChannel();
+            final ByteBuffer apkSigningBlock2 = ApkUtil.findApkSigningBlock(fileChannel).getFirst();
+            idValues = ApkUtil.findIdValues(apkSigningBlock2);
         } finally {
-            V2Utils.close(fc);
-            V2Utils.close(raf);
+            try {
+                if (fileChannel != null) {
+                    fileChannel.close();
+                }
+            } catch (IOException ignore) {
+            }
+            try {
+                if (randomAccessFile != null) {
+                    randomAccessFile.close();
+                }
+            } catch (IOException ignore) {
+            }
         }
-        return blocks;
+
+        return idValues;
     }
 }

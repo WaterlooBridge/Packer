@@ -18,7 +18,7 @@ dependencies {
 
 group = "com.zhenl.support"
 archivesBaseName = "packer"
-version = "1.0.1"
+version = "1.0.2"
 
 task androidJavadocs(type: Javadoc) {
     failOnError = false
